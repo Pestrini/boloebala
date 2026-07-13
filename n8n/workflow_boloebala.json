@@ -1,0 +1,159 @@
+{
+  "name": "Bolo&Bala - Orquestração Omnichannel",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "supabase-webhook",
+        "options": {}
+      },
+      "name": "Webhook Supabase",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 200],
+      "id": "1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8080/message/sendText/boloebala",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "179A6CD2-3F9E-4B60-921C-216DB0BA564A"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "5516991103825"
+            },
+            {
+              "name": "text",
+              "value": "={{ '🍰 *NOVO PEDIDO (WebApp)*\\n\\n👤 Cliente: ' + $json.body.record.cliente_nome + '\\n📱 WhatsApp: ' + $json.body.record.cliente_whatsapp + '\\n📅 Data: ' + $json.body.record.data_entrega + '\\n🍰 Sabor: ' + $json.body.record.sabor }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Notificar Tia Cida (WebApp)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 200],
+      "id": "2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "path": "evolution-api-webhook",
+        "options": {}
+      },
+      "name": "Evolution API Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 500],
+      "id": "3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.message.text}}",
+              "operation": "contains",
+              "value2": "3"
+            }
+          ]
+        }
+      },
+      "name": "Tia Cida (Humano)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "id": "4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8080/message/sendText/boloebala",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "179A6CD2-3F9E-4B60-921C-216DB0BA564A"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{$json.body.key.remoteJid}}"
+            },
+            {
+              "name": "text",
+              "value": "Tudo bem, estou te transferindo para a Tia Cida. Um momento!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Avisar Transferência",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 480],
+      "id": "5"
+    }
+  ],
+  "connections": {
+    "Webhook Supabase": {
+      "main": [
+        [
+          {
+            "node": "Notificar Tia Cida (WebApp)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evolution API Webhook": {
+      "main": [
+        [
+          {
+            "node": "Tia Cida (Humano)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tia Cida (Humano)?": {
+      "main": [
+        [
+          {
+            "node": "Avisar Transferência",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
