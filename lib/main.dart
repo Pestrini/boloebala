@@ -7,10 +7,11 @@ import 'pages/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Supabase.initialize(
     url: 'https://supabase.vps9867.panel.icontainer.net',
-    anonKey: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3ODM5MTk4MjgsImV4cCI6MTc4MzkyMzQyOCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.nBL0OA3LleLXxkIKAwlEPJj2FL_7X6fHzA2pkiNHvws',
+    anonKey:
+        'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3ODM5MTk4MjgsImV4cCI6MTc4MzkyMzQyOCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.nBL0OA3LleLXxkIKAwlEPJj2FL_7X6fHzA2pkiNHvws',
   );
 
   runApp(const BoloBalaApp());

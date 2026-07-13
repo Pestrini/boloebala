@@ -29,10 +29,12 @@ class _AdminPageState extends State<AdminPage> {
   Future<void> updateStatus(String id, String newStatus) async {
     try {
       await supabase.from('pedidos').update({'status': newStatus}).eq('id', id);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Pedido atualizado para $newStatus!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pedido atualizado para $newStatus!')));
       setState(() {}); // Força recarregar a lista
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao atualizar: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Erro ao atualizar: $e')));
     }
   }
 
@@ -40,7 +42,8 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Painel da Tia Cida', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Painel da Tia Cida',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.pink,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -55,7 +58,10 @@ class _AdminPageState extends State<AdminPage> {
         ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: supabase.from('pedidos').select().order('criado_em', ascending: false),
+        future: supabase
+            .from('pedidos')
+            .select()
+            .order('criado_em', ascending: false),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -65,7 +71,9 @@ class _AdminPageState extends State<AdminPage> {
           }
           final pedidos = snapshot.data ?? [];
           if (pedidos.isEmpty) {
-            return const Center(child: Text('Nenhum pedido recebido ainda.', style: TextStyle(fontSize: 18)));
+            return const Center(
+                child: Text('Nenhum pedido recebido ainda.',
+                    style: TextStyle(fontSize: 18)));
           }
 
           return ListView.builder(
@@ -74,15 +82,16 @@ class _AdminPageState extends State<AdminPage> {
             itemBuilder: (context, index) {
               final p = pedidos[index];
               final status = p['status'] ?? 'AGUARDANDO_ANALISE';
-              final cores = p['detalhes_cores'] != null ? (p['detalhes_cores'] as List).join(', ') : 'Nenhuma';
-              
+              final cores = p['detalhes_cores'] != null
+                  ? (p['detalhes_cores'] as List).join(', ')
+                  : 'Nenhuma';
+
               return Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
                 shape: RoundedRectangleBorder(
-                  side: BorderSide(color: getStatusColor(status), width: 2),
-                  borderRadius: BorderRadius.circular(12)
-                ),
+                    side: BorderSide(color: getStatusColor(status), width: 2),
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -91,9 +100,14 @@ class _AdminPageState extends State<AdminPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Pedido #${p['id'].toString().substring(0, 8)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Pedido #${p['id'].toString().substring(0, 8)}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                           Chip(
-                            label: Text(status, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            label: Text(status,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
                             backgroundColor: getStatusColor(status),
                           )
                         ],
@@ -101,8 +115,10 @@ class _AdminPageState extends State<AdminPage> {
                       const Divider(),
                       Text('👤 Cliente: ${p['cliente_nome']}'),
                       Text('📱 WhatsApp: ${p['cliente_whatsapp']}'),
-                      Text('📅 Data Desejada: ${p['data_entrega'] ?? 'Não informada'}'),
-                      Text('🍰 Sabor: ${p['sabor']} ${p['is_personalizado'] == true ? "(Personalizado)" : ""}'),
+                      Text(
+                          '📅 Data Desejada: ${p['data_entrega'] ?? 'Não informada'}'),
+                      Text(
+                          '🍰 Sabor: ${p['sabor']} ${p['is_personalizado'] == true ? "(Personalizado)" : ""}'),
                       Text('🎨 Cores: $cores'),
                       const SizedBox(height: 10),
                       if (p['comprovante_url'] != null)
@@ -110,13 +126,17 @@ class _AdminPageState extends State<AdminPage> {
                           onPressed: () {
                             // Mostrar comprovante em um dialog
                             showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('Comprovante PIX'),
-                                content: Image.network(p['comprovante_url']),
-                                actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar'))]
-                              )
-                            );
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                        title: const Text('Comprovante PIX'),
+                                        content:
+                                            Image.network(p['comprovante_url']),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text('Fechar'))
+                                        ]));
                           },
                           icon: const Icon(Icons.receipt),
                           label: const Text('Ver Comprovante'),
@@ -128,22 +148,31 @@ class _AdminPageState extends State<AdminPage> {
                         children: [
                           if (status == 'AGUARDANDO_ANALISE') ...[
                             ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'APROVADO'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white),
+                              onPressed: () =>
+                                  updateStatus(p['id'], 'APROVADO'),
                               icon: const Icon(Icons.check),
                               label: const Text('Aceitar'),
                             ),
                             ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'RECUSADO'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white),
+                              onPressed: () =>
+                                  updateStatus(p['id'], 'RECUSADO'),
                               icon: const Icon(Icons.close),
                               label: const Text('Recusar'),
                             ),
                           ],
                           if (status == 'APROVADO')
                             ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'FINALIZADO'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white),
+                              onPressed: () =>
+                                  updateStatus(p['id'], 'FINALIZADO'),
                               icon: const Icon(Icons.attach_money),
                               label: const Text('Marcar como Pago'),
                             ),

@@ -14,27 +14,36 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final supabase = Supabase.instance.client;
   final _formKey = GlobalKey<FormState>();
-  
+
   // States
   bool _isPersonalizado = false;
   String _saborSelecionado = '';
-  final TextEditingController _saborPersonalizadoController = TextEditingController();
+  final TextEditingController _saborPersonalizadoController =
+      TextEditingController();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _whatsAppController = TextEditingController();
   final TextEditingController _customColorController = TextEditingController();
   final TextEditingController _dataEntregaController = TextEditingController();
 
-  final List<String> availableColors = ['Vermelho', 'Verde', 'Azul', 'Rosa', 'Roxo', 'Branco', 'Preto', 'Personalizada'];
+  final List<String> availableColors = [
+    'Vermelho',
+    'Verde',
+    'Azul',
+    'Rosa',
+    'Roxo',
+    'Branco',
+    'Preto',
+    'Personalizada'
+  ];
   List<String> selectedColors = [];
   String customColor = "";
-  
+
   bool _isSubmitting = false;
 
   final whatsappMask = MaskTextInputFormatter(
-    mask: '(##) #####-####', 
-    filter: { "#": RegExp(r'[0-9]') },
-    type: MaskAutoCompletionType.lazy
-  );
+      mask: '(##) #####-####',
+      filter: {"#": RegExp(r'[0-9]')},
+      type: MaskAutoCompletionType.lazy);
 
   void toggleColor(String color) {
     setState(() {
@@ -45,7 +54,8 @@ class _HomePageState extends State<HomePage> {
           selectedColors.add(color);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Você pode escolher no máximo 3 cores.')),
+            const SnackBar(
+                content: Text('Você pode escolher no máximo 3 cores.')),
           );
         }
       }
@@ -60,26 +70,32 @@ class _HomePageState extends State<HomePage> {
   Future<void> submitOrder() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedColors.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escolha pelo menos 1 cor de embrulho.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Escolha pelo menos 1 cor de embrulho.')));
       return;
     }
     if (!_isPersonalizado && _saborSelecionado.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Escolha um sabor do cardápio.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Escolha um sabor do cardápio.')));
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final finalColors = selectedColors.map((c) => c == 'Personalizada' ? _customColorController.text : c).toList();
-      
+      final finalColors = selectedColors
+          .map((c) => c == 'Personalizada' ? _customColorController.text : c)
+          .toList();
+
       final payload = {
         'origem': 'webapp',
         'cliente_nome': _nomeController.text,
         'cliente_whatsapp': _whatsAppController.text,
         'data_entrega': _dataEntregaController.text,
         'is_personalizado': _isPersonalizado,
-        'sabor': _isPersonalizado ? _saborPersonalizadoController.text : _saborSelecionado,
+        'sabor': _isPersonalizado
+            ? _saborPersonalizadoController.text
+            : _saborSelecionado,
         'detalhes_cores': finalColors,
       };
 
@@ -91,7 +107,8 @@ class _HomePageState extends State<HomePage> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Pedido Recebido! 🎉'),
-            content: const Text('A Tia Cida já recebeu seu pedido. Entraremos em contato pelo WhatsApp.'),
+            content: const Text(
+                'A Tia Cida já recebeu seu pedido. Entraremos em contato pelo WhatsApp.'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -112,7 +129,8 @@ class _HomePageState extends State<HomePage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao enviar pedido: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Erro ao enviar pedido: $e')));
     } finally {
       setState(() => _isSubmitting = false);
     }
@@ -128,7 +146,11 @@ class _HomePageState extends State<HomePage> {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Bolo & Bala', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black45, blurRadius: 4)])),
+              title: const Text('Bolo & Bala',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      shadows: [Shadow(color: Colors.black45, blurRadius: 4)])),
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -146,7 +168,8 @@ class _HomePageState extends State<HomePage> {
                       top: 40,
                       right: 16,
                       child: IconButton(
-                        icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+                        icon: const Icon(Icons.admin_panel_settings,
+                            color: Colors.white),
                         tooltip: 'Painel da Tia Cida',
                         onPressed: () {
                           // Navegar para a página de admin (a ser implementada)
@@ -168,39 +191,60 @@ class _HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Dados do Cliente
-                    const Text('Seus Dados', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text('Seus Dados',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _nomeController,
-                      decoration: InputDecoration(labelText: 'Seu Nome', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                      validator: (val) => val!.isEmpty ? 'Campo obrigatório' : null,
+                      decoration: InputDecoration(
+                          labelText: 'Seu Nome',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      validator: (val) =>
+                          val!.isEmpty ? 'Campo obrigatório' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _whatsAppController,
                       inputFormatters: [whatsappMask],
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(labelText: 'WhatsApp', hintText: '(99) 99999-9999', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                      validator: (val) => val!.length < 14 ? 'WhatsApp inválido' : null,
+                      decoration: InputDecoration(
+                          labelText: 'WhatsApp',
+                          hintText: '(99) 99999-9999',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      validator: (val) =>
+                          val!.length < 14 ? 'WhatsApp inválido' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _dataEntregaController,
-                      decoration: InputDecoration(labelText: 'Data da Encomenda', hintText: 'Ex: 12/10 às 14h', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-                      validator: (val) => val!.isEmpty ? 'Por favor, informe quando precisa do bolo' : null,
+                      decoration: InputDecoration(
+                          labelText: 'Data da Encomenda',
+                          hintText: 'Ex: 12/10 às 14h',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      validator: (val) => val!.isEmpty
+                          ? 'Por favor, informe quando precisa do bolo'
+                          : null,
                     ),
-                    
+
                     const SizedBox(height: 30),
                     const Divider(),
                     const SizedBox(height: 10),
 
                     // Tipo de Pedido
-                    const Text('Escolha seu Bolo', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text('Escolha seu Bolo',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     SegmentedButton<bool>(
                       segments: const [
-                        ButtonSegment(value: false, label: Text('Bolo do Cardápio')),
-                        ButtonSegment(value: true, label: Text('Bolo Personalizado')),
+                        ButtonSegment(
+                            value: false, label: Text('Bolo do Cardápio')),
+                        ButtonSegment(
+                            value: true, label: Text('Bolo Personalizado')),
                       ],
                       selected: {_isPersonalizado},
                       onSelectionChanged: (Set<bool> newSelection) {
@@ -212,58 +256,88 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 20),
 
                     // Lista de Produtos ou Campo Personalizado
-                    _isPersonalizado 
-                      ? TextFormField(
-                          controller: _saborPersonalizadoController,
-                          decoration: InputDecoration(
-                            labelText: 'Qual sabor você deseja?',
-                            hintText: 'Ex: Massa de nozes com doce de leite...',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))
-                          ),
-                          maxLines: 3,
-                          validator: (val) => _isPersonalizado && val!.isEmpty ? 'Descreva o sabor desejado' : null,
-                        )
-                      : FutureBuilder<List<Map<String, dynamic>>>(
-                          future: supabase.from('produtos').select().eq('ativo', true).order('nome'),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                            if (snapshot.hasError) return Text('Erro ao carregar cardápio: ${snapshot.error}');
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text('Nenhum produto disponível.');
+                    _isPersonalizado
+                        ? TextFormField(
+                            controller: _saborPersonalizadoController,
+                            decoration: InputDecoration(
+                                labelText: 'Qual sabor você deseja?',
+                                hintText:
+                                    'Ex: Massa de nozes com doce de leite...',
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                            maxLines: 3,
+                            validator: (val) => _isPersonalizado && val!.isEmpty
+                                ? 'Descreva o sabor desejado'
+                                : null,
+                          )
+                        : FutureBuilder<List<Map<String, dynamic>>>(
+                            future: supabase
+                                .from('produtos')
+                                .select()
+                                .eq('ativo', true)
+                                .order('nome'),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting)
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              if (snapshot.hasError)
+                                return Text(
+                                    'Erro ao carregar cardápio: ${snapshot.error}');
+                              if (!snapshot.hasData || snapshot.data!.isEmpty)
+                                return const Text('Nenhum produto disponível.');
 
-                            final produtos = snapshot.data!;
-                            return ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: produtos.length,
-                              itemBuilder: (context, index) {
-                                final p = produtos[index];
-                                final isSelected = _saborSelecionado == p['nome'];
-                                return Card(
-                                  elevation: isSelected ? 4 : 1,
-                                  color: isSelected ? Colors.pink.shade50 : null,
-                                  shape: RoundedRectangleBorder(
-                                    side: BorderSide(color: isSelected ? Colors.pink : Colors.transparent, width: 2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: ListTile(
-                                    title: Text(p['nome'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text(p['descricao'] ?? ''),
-                                    trailing: Text('R\$ ${p['preco'].toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                                    onTap: () => setState(() => _saborSelecionado = p['nome']),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                    
+                              final produtos = snapshot.data!;
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: produtos.length,
+                                itemBuilder: (context, index) {
+                                  final p = produtos[index];
+                                  final isSelected =
+                                      _saborSelecionado == p['nome'];
+                                  return Card(
+                                    elevation: isSelected ? 4 : 1,
+                                    color:
+                                        isSelected ? Colors.pink.shade50 : null,
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                          color: isSelected
+                                              ? Colors.pink
+                                              : Colors.transparent,
+                                          width: 2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ListTile(
+                                      title: Text(p['nome'],
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      subtitle: Text(p['descricao'] ?? ''),
+                                      trailing: Text(
+                                          'R\$ ${p['preco'].toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold)),
+                                      onTap: () => setState(
+                                          () => _saborSelecionado = p['nome']),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+
                     const SizedBox(height: 30),
                     const Divider(),
                     const SizedBox(height: 10),
 
                     // Cores dos Embrulhos
-                    const Text('Cores dos Embrulhos', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    const Text('O bolo rende 30 pedaços. Escolha até 3 cores e nós dividiremos igualmente!', style: TextStyle(color: Colors.grey)),
+                    const Text('Cores dos Embrulhos',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text(
+                        'O bolo rende 30 pedaços. Escolha até 3 cores e nós dividiremos igualmente!',
+                        style: TextStyle(color: Colors.grey)),
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
@@ -285,7 +359,8 @@ class _HomePageState extends State<HomePage> {
                         controller: _customColorController,
                         decoration: InputDecoration(
                           labelText: 'Qual cor personalizada?',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       )
                     ],
@@ -295,10 +370,9 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.pink.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.pink.shade200)
-                        ),
+                            color: Colors.pink.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.pink.shade200)),
                         child: Row(
                           children: [
                             const Icon(Icons.pie_chart, color: Colors.pink),
@@ -306,7 +380,9 @@ class _HomePageState extends State<HomePage> {
                             Expanded(
                               child: Text(
                                 'Divisão Matemática: Você escolheu ${selectedColors.length} cor(es). Serão $slicesPerColor fatias com cada cor.',
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.pink),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.pink),
                               ),
                             ),
                           ],
@@ -315,7 +391,7 @@ class _HomePageState extends State<HomePage> {
                     ],
 
                     const SizedBox(height: 40),
-                    
+
                     // Botão Enviar
                     SizedBox(
                       width: double.infinity,
@@ -324,13 +400,19 @@ class _HomePageState extends State<HomePage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.pink,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           elevation: 3,
                         ),
                         onPressed: _isSubmitting ? null : submitOrder,
-                        child: _isSubmitting 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('ENVIAR PEDIDO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                        child: _isSubmitting
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : const Text('ENVIAR PEDIDO',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2)),
                       ),
                     ),
                     const SizedBox(height: 50),
