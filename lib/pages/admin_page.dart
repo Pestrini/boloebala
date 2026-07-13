@@ -15,11 +15,11 @@ class _AdminPageState extends State<AdminPage> {
     switch (status) {
       case 'AGUARDANDO_ANALISE':
         return Colors.orange;
-      case 'CONFIRMADO':
+      case 'APROVADO':
         return Colors.green;
-      case 'CANCELADO':
+      case 'RECUSADO':
         return Colors.red;
-      case 'PAGO':
+      case 'FINALIZADO':
         return Colors.blue;
       default:
         return Colors.grey;
@@ -129,21 +129,21 @@ class _AdminPageState extends State<AdminPage> {
                           if (status == 'AGUARDANDO_ANALISE') ...[
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'CONFIRMADO'),
+                              onPressed: () => updateStatus(p['id'], 'APROVADO'),
                               icon: const Icon(Icons.check),
                               label: const Text('Aceitar'),
                             ),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'CANCELADO'),
+                              onPressed: () => updateStatus(p['id'], 'RECUSADO'),
                               icon: const Icon(Icons.close),
                               label: const Text('Recusar'),
                             ),
                           ],
-                          if (status == 'CONFIRMADO')
+                          if (status == 'APROVADO')
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
-                              onPressed: () => updateStatus(p['id'], 'PAGO'),
+                              onPressed: () => updateStatus(p['id'], 'FINALIZADO'),
                               icon: const Icon(Icons.attach_money),
                               label: const Text('Marcar como Pago'),
                             ),
