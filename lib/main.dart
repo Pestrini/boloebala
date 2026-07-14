@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'pages/home_page.dart';
-import 'pages/admin_page.dart';
 import 'pages/login_page.dart';
 import 'pages/client_area.dart';
 
