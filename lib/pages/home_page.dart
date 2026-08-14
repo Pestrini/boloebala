@@ -15,6 +15,23 @@ class _HomePageState extends State<HomePage> {
 
   // States
   String _tipoBolo = 'EMBRULHADO'; // EMBRULHADO, TRADICIONAL, PERSONALIZADO
+  late Future<List<Map<String, dynamic>>> _produtosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProdutos();
+  }
+
+  void _loadProdutos() {
+    _produtosFuture = supabase
+        .from('produtos')
+        .select()
+        .eq('ativo', true)
+        .eq('categoria', _tipoBolo)
+        .order('nome');
+  }
+
   String _saborSelecionado = '';
   final TextEditingController _saborPersonalizadoController =
       TextEditingController();
@@ -83,6 +100,12 @@ class _HomePageState extends State<HomePage> {
       final TimeOfDay? time = await showTimePicker(
         context: context,
         initialTime: const TimeOfDay(hour: 14, minute: 0),
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+            child: child!,
+          );
+        },
       );
       if (time != null) {
         if (time.hour < 8 || time.hour > 18) {
@@ -143,10 +166,12 @@ class _HomePageState extends State<HomePage> {
           .map((c) => c == 'Personalizada' ? _customColorController.text : c)
           .toList();
 
+      final cleanPhone = '55' + _whatsAppController.text.replaceAll(RegExp(r'[^0-9]'), '');
+
       final payload = {
         'origem': 'webapp',
         'cliente_nome': _nomeController.text,
-        'cliente_whatsapp': _whatsAppController.text,
+        'cliente_whatsapp': cleanPhone,
         'data_entrega': formattedDateTime,
         'is_personalizado': _tipoBolo == 'PERSONALIZADO',
         'sabor': _tipoBolo == 'PERSONALIZADO'
@@ -210,41 +235,25 @@ class _HomePageState extends State<HomePage> {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Bolo & Bala',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [Shadow(color: Colors.black45, blurRadius: 4)])),
+              title: const SizedBox.shrink(),
               background: Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFE91E63), Color(0xFFF48FB1)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: Colors.white,
                 ),
                 child: Stack(
                   children: [
-                    const Center(
+                    Center(
                         child:
-                            Icon(Icons.cake, size: 80, color: Colors.white54)),
+                            Image.asset('assets/images/logo.png', height: 160)),
                     Positioned(
                       top: 40,
                       right: 16,
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.person, color: Colors.white),
-                            tooltip: 'Meus Pedidos',
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/client'),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.admin_panel_settings,
-                                color: Colors.white),
-                            tooltip: 'Painel da Tia Cida',
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/admin'),
+                            icon: const Icon(Icons.close, color: Color(0xFFD4AF37)),
+                            tooltip: 'Voltar',
+                            onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
@@ -333,6 +342,7 @@ class _HomePageState extends State<HomePage> {
                           _saborSelecionado = '';
                           _precoSelecionado = null;
                           selectedColors.clear();
+                          _loadProdutos(); // Recarrega os produtos para a nova categoria
                         });
                       },
                     ),
@@ -353,12 +363,7 @@ class _HomePageState extends State<HomePage> {
                                     : null,
                           )
                         : FutureBuilder<List<Map<String, dynamic>>>(
-                            future: supabase
-                                .from('produtos')
-                                .select()
-                                .eq('ativo', true)
-                                .eq('categoria', _tipoBolo)
-                                .order('nome'),
+                            future: _produtosFuture,
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting)
@@ -383,11 +388,11 @@ class _HomePageState extends State<HomePage> {
                                   return Card(
                                     elevation: isSelected ? 4 : 1,
                                     color:
-                                        isSelected ? Colors.pink.shade50 : null,
+                                        isSelected ? const Color(0xFFFCF9F2) : null,
                                     shape: RoundedRectangleBorder(
                                       side: BorderSide(
                                           color: isSelected
-                                              ? Colors.pink
+                                              ? const Color(0xFFD4AF37)
                                               : Colors.transparent,
                                           width: 2),
                                       borderRadius: BorderRadius.circular(12),
@@ -432,8 +437,8 @@ class _HomePageState extends State<HomePage> {
                           return FilterChip(
                             label: Text(color),
                             selected: isSelected,
-                            selectedColor: Colors.pink.shade100,
-                            checkmarkColor: Colors.pink,
+                            selectedColor: const Color(0xFFF9F1D8),
+                            checkmarkColor: const Color(0xFFD4AF37),
                             onSelected: (selected) => toggleColor(color),
                           );
                         }).toList(),
@@ -453,19 +458,19 @@ class _HomePageState extends State<HomePage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                              color: Colors.pink.shade50,
+                              color: const Color(0xFFFCF9F2),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.pink.shade200)),
+                              border: Border.all(color: const Color(0xFFF9F1D8))),
                           child: Row(
                             children: [
-                              const Icon(Icons.pie_chart, color: Colors.pink),
+                              const Icon(Icons.pie_chart, color: Color(0xFFD4AF37)),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   'Divisão Matemática: Você escolheu ${selectedColors.length} cor(es). Serão $slicesPerColor fatias com cada cor.',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.pink),
+                                      color: Color(0xFFD4AF37)),
                                 ),
                               ),
                             ],
@@ -528,7 +533,7 @@ class _HomePageState extends State<HomePage> {
                       height: 55,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink,
+                          backgroundColor: const Color(0xFFD4AF37),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),

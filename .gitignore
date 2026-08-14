@@ -28,4 +28,14 @@ build/
 
 # Android Studio
 .gradle/
-node_modules/  
+node_modules/
+
+# Scripts e arquivos temporários da automação
+/*.js
+/*.py
+/*.json
+/*.sql
+!package.json
+!package-lock.json
+!pubspec.yaml
+!pubspec.lock

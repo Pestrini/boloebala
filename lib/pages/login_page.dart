@@ -39,7 +39,17 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Acesso Restrito - Tia Cida'), backgroundColor: Colors.pink, foregroundColor: Colors.white),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', height: 40),
+            const SizedBox(width: 10),
+            const Text('Acesso Restrito - Tia Cida'),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFFD4AF37),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -53,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.lock, size: 64, color: Colors.pink),
+                    Image.asset('assets/images/logo.png', height: 80),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _emailController,
@@ -69,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     _isLoading
                         ? const CircularProgressIndicator()
                         : ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4AF37), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50)),
                             onPressed: _signIn,
                             child: const Text('Entrar'),
                           ),

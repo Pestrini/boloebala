@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 import 'pages/client_area.dart';
+import 'pages/welcome_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,12 +25,18 @@ class BoloBalaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bolo & Bala',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD4AF37)),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFFD4AF37),
+          elevation: 2,
+        ),
         useMaterial3: true,
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const HomePage(),
+        '/': (context) => const WelcomePage(),
+        '/home': (context) => const HomePage(),
         '/client': (context) => const ClientAreaPage(),
         '/admin': (context) => const LoginPage(),
       },

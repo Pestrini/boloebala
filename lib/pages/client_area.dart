@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ClientAreaPage extends StatefulWidget {
   const ClientAreaPage({super.key});
@@ -14,7 +15,7 @@ class ClientAreaPage extends StatefulWidget {
 class _ClientAreaPageState extends State<ClientAreaPage> {
   final supabase = Supabase.instance.client;
   final TextEditingController _whatsAppController = TextEditingController();
-  
+
   final whatsappMask = MaskTextInputFormatter(
       mask: '(##) #####-####',
       filter: {"#": RegExp(r'[0-9]')},
@@ -26,42 +27,49 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
 
   Future<void> fetchPedidos() async {
     if (_whatsAppController.text.length < 14) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Digite o WhatsApp completo.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Digite o WhatsApp completo.')));
       return;
     }
     setState(() => _isLoading = true);
     try {
+      final cleanPhone = '55' + _whatsAppController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      
       final response = await supabase
           .from('pedidos')
           .select()
-          .eq('cliente_whatsapp', _whatsAppController.text)
+          .eq('cliente_whatsapp', cleanPhone)
           .order('criado_em', ascending: false);
-      
+
       setState(() {
         _pedidos = List<Map<String, dynamic>>.from(response);
         _hasSearched = true;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao buscar pedidos: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Erro ao buscar pedidos: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  Future<void> updatePedidoPayment(String pedidoId, String formaPagamento, Uint8List? comprovanteBytes, String? comprovanteName) async {
+  Future<void> updatePedidoPayment(String pedidoId, String formaPagamento,
+      Uint8List? comprovanteBytes, String? comprovanteName) async {
     setState(() => _isLoading = true);
     try {
       String? comprovanteUrl;
       if (formaPagamento == 'PIX' && comprovanteBytes != null) {
         final ext = comprovanteName?.split('.').last ?? 'jpg';
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_whatsAppController.text.replaceAll(RegExp(r'[^0-9]'), '')}.$ext';
-        
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${_whatsAppController.text.replaceAll(RegExp(r'[^0-9]'), '')}.$ext';
+
         await supabase.storage.from('comprovantes').uploadBinary(
-          fileName,
-          comprovanteBytes,
-          fileOptions: FileOptions(contentType: 'image/$ext'),
-        );
-        comprovanteUrl = supabase.storage.from('comprovantes').getPublicUrl(fileName);
+              fileName,
+              comprovanteBytes,
+              fileOptions: FileOptions(contentType: 'image/$ext'),
+            );
+        comprovanteUrl =
+            supabase.storage.from('comprovantes').getPublicUrl(fileName);
       }
 
       await supabase.from('pedidos').update({
@@ -69,10 +77,12 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
         if (comprovanteUrl != null) 'comprovante_url': comprovanteUrl,
       }).eq('id', pedidoId);
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pagamento registrado com sucesso!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pagamento registrado com sucesso!')));
       await fetchPedidos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao registrar pagamento: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao registrar pagamento: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -84,25 +94,34 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
     String? comprovanteName;
 
     await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Como deseja pagar?'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Total a pagar: R\$ ${pedido['valor_total']?.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(
+                      'Total a pagar: R\$ ${pedido['valor_total']?.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
-                    decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                    decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12))),
                     hint: const Text('Forma de Pagamento'),
                     value: selectedForma,
                     items: const [
-                      DropdownMenuItem(value: 'PIX', child: Text('PIX (Enviar Comprovante)')),
-                      DropdownMenuItem(value: 'DINHEIRO', child: Text('Dinheiro (Na entrega)')),
-                      DropdownMenuItem(value: 'CARTAO', child: Text('Cartão (Na entrega)')),
+                      DropdownMenuItem(
+                          value: 'PIX',
+                          child: Text('PIX (Enviar Comprovante)')),
+                      DropdownMenuItem(
+                          value: 'DINHEIRO',
+                          child: Text('Dinheiro (Na entrega)')),
+                      DropdownMenuItem(
+                          value: 'CARTAO', child: Text('Cartão (Na entrega)')),
                     ],
                     onChanged: (val) {
                       setDialogState(() {
@@ -114,20 +133,26 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                     const SizedBox(height: 15),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.pink.shade50, borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFFFCF9F2),
+                          borderRadius: BorderRadius.circular(8)),
                       child: const SelectableText(
                         'Chave PIX (Celular):\n16991103825\nManuel de Oliveira Repas\nPagseguro',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.upload_file),
-                      label: Text(comprovanteBytes == null ? 'Anexar Comprovante PIX' : 'Comprovante Selecionado'),
+                      label: Text(comprovanteBytes == null
+                          ? 'Anexar Comprovante PIX'
+                          : 'Comprovante Selecionado'),
                       onPressed: () async {
                         final picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        final XFile? image =
+                            await picker.pickImage(source: ImageSource.gallery);
                         if (image != null) {
                           final bytes = await image.readAsBytes();
                           setDialogState(() {
@@ -141,22 +166,24 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar')),
                 ElevatedButton(
-                  onPressed: selectedForma == null || (selectedForma == 'PIX' && comprovanteBytes == null)
+                  onPressed: selectedForma == null ||
+                          (selectedForma == 'PIX' && comprovanteBytes == null)
                       ? null
                       : () {
                           Navigator.pop(context);
-                          updatePedidoPayment(pedido['id'], selectedForma!, comprovanteBytes, comprovanteName);
+                          updatePedidoPayment(pedido['id'], selectedForma!,
+                              comprovanteBytes, comprovanteName);
                         },
                   child: const Text('Confirmar Pagamento'),
                 )
               ],
             );
-          }
-        );
-      }
-    );
+          });
+        });
   }
 
   Future<void> openRescheduleDialog(Map<String, dynamic> pedido) async {
@@ -173,11 +200,14 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
       );
       if (time != null) {
         if (time.hour < 8 || time.hour > 18) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, escolha um horário entre 08:00 e 18:00.')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content:
+                  Text('Por favor, escolha um horário entre 08:00 e 18:00.')));
           return;
         }
-        
-        final formattedDateTime = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} às ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}h';
+
+        final formattedDateTime =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} às ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}h';
 
         setState(() => _isLoading = true);
         try {
@@ -188,10 +218,12 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
             'sugestao_recusa': null,
           }).eq('id', pedido['id']);
 
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pedido reagendado com sucesso!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Pedido reagendado com sucesso!')));
           await fetchPedidos();
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao reagendar: $e')));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Erro ao reagendar: $e')));
         } finally {
           setState(() => _isLoading = false);
         }
@@ -206,16 +238,19 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
         'status': 'CANCELADO_PELO_CLIENTE',
       }).eq('id', pedidoId);
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pedido cancelado com sucesso.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pedido cancelado com sucesso.')));
       await fetchPedidos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao cancelar: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Erro ao cancelar: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  Widget buildStatusBadge(String status) {
+  Widget buildStatusBadge(Map<String, dynamic> pedido) {
+    String status = pedido['status'];
     Color color;
     String label;
     switch (status) {
@@ -224,8 +259,13 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
         label = 'Em Análise';
         break;
       case 'APROVADO':
-        color = Colors.green;
-        label = 'Aprovado';
+        if (pedido['is_pago'] == true) {
+          color = Colors.green;
+          label = 'Pago ✅';
+        } else {
+          color = Colors.blue;
+          label = 'Aguardando Pagamento';
+        }
         break;
       case 'RECUSADO':
         color = Colors.red;
@@ -246,8 +286,11 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-      child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12)),
+      child: Text(label,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -255,9 +298,15 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Área do Cliente'),
-        backgroundColor: Colors.pink,
-        foregroundColor: Colors.white,
+        title: Row(
+          children: [
+            Image.asset('assets/images/logo.png', height: 40),
+            const SizedBox(width: 10),
+            const Text('Área do Cliente'),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFFD4AF37),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -273,7 +322,8 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text('Acompanhe seus pedidos informando seu WhatsApp.', style: TextStyle(fontSize: 16)),
+            const Text('Acompanhe seus pedidos informando seu WhatsApp.',
+                style: TextStyle(fontSize: 16)),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -285,7 +335,8 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                     decoration: InputDecoration(
                       labelText: 'WhatsApp',
                       hintText: '(99) 99999-9999',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.phone),
                     ),
                   ),
@@ -294,16 +345,25 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                 SizedBox(
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : fetchPedidos,
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.pink, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.search),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD4AF37),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      onPressed: _isLoading ? null : fetchPedidos,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Icon(Icons.search),
                   ),
                 )
               ],
             ),
             const SizedBox(height: 20),
             if (_hasSearched && _pedidos.isEmpty && !_isLoading)
-              const Expanded(child: Center(child: Text('Nenhum pedido encontrado para este número.')))
+              const Expanded(
+                  child: Center(
+                      child:
+                          Text('Nenhum pedido encontrado para este número.')))
             else if (_pedidos.isNotEmpty)
               Expanded(
                 child: ListView.builder(
@@ -312,7 +372,8 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                     final pedido = _pedidos[index];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -322,21 +383,33 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
-                                  child: Text(pedido['sabor'] ?? 'Bolo', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                  child: Text(pedido['sabor'] ?? 'Bolo',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18)),
                                 ),
-                                buildStatusBadge(pedido['status']),
+                                buildStatusBadge(pedido),
                               ],
                             ),
                             const SizedBox(height: 10),
                             Text('Data: ${pedido['data_entrega']}'),
-                            Text('Entrega/Retirada: ${pedido['metodo_entrega'] ?? 'Não informado'}'),
+                            Text(
+                                'Entrega/Retirada: ${pedido['metodo_entrega'] ?? 'Não informado'}'),
                             if (pedido['valor_total'] != null)
-                              Text('Total: R\$ ${pedido['valor_total'].toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                            
+                              Text(
+                                  'Total: R\$ ${pedido['valor_total'].toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold)),
+
                             if (pedido['forma_pagamento'] != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 8),
-                                child: Text('Pago via: ${pedido['forma_pagamento']}', style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                                child: Text(
+                                    'Pago via: ${pedido['forma_pagamento']}',
+                                    style: const TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold)),
                               ),
 
                             // AÇÕES DEPENDENDO DO STATUS
@@ -344,13 +417,21 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                               const SizedBox(height: 10),
                               Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(8)),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Motivo: ${pedido['motivo_recusa'] ?? 'Sem justificativa'}', style: const TextStyle(color: Colors.red)),
+                                    Text(
+                                        'Motivo: ${pedido['motivo_recusa'] ?? 'Sem justificativa'}',
+                                        style:
+                                            const TextStyle(color: Colors.red)),
                                     if (pedido['sugestao_recusa'] != null)
-                                      Text('Sugestão da Cida: ${pedido['sugestao_recusa']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      Text(
+                                          'Sugestão da Cida: ${pedido['sugestao_recusa']}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ),
@@ -359,7 +440,8 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                                 children: [
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      onPressed: () => openRescheduleDialog(pedido),
+                                      onPressed: () =>
+                                          openRescheduleDialog(pedido),
                                       icon: const Icon(Icons.calendar_month),
                                       label: const Text('Reagendar'),
                                     ),
@@ -367,8 +449,11 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade100, foregroundColor: Colors.red.shade900),
-                                      onPressed: () => cancelOrder(pedido['id']),
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red.shade100,
+                                          foregroundColor: Colors.red.shade900),
+                                      onPressed: () =>
+                                          cancelOrder(pedido['id']),
                                       icon: const Icon(Icons.cancel),
                                       label: const Text('Cancelar'),
                                     ),
@@ -377,19 +462,40 @@ class _ClientAreaPageState extends State<ClientAreaPage> {
                               )
                             ],
 
-                            if (pedido['status'] == 'APROVADO' && pedido['forma_pagamento'] == null) ...[
+                            if (pedido['status'] == 'APROVADO' &&
+                                pedido['forma_pagamento'] == null) ...[
                               const SizedBox(height: 10),
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white),
                                   onPressed: () => openPaymentDialog(pedido),
                                   icon: const Icon(Icons.payment),
-                                  label: const Text('Efetuar Pagamento / Combinar'),
+                                  label: const Text(
+                                      'Efetuar Pagamento / Combinar'),
                                 ),
                               )
-                            ]
+                            ],
 
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.green,
+                                  side: const BorderSide(color: Colors.green),
+                                ),
+                                onPressed: () async {
+                                  final numStr = '5516991103825';
+                                  final url = Uri.parse('https://wa.me/$numStr?text=#atendimento Olá Tia Cida, sou o(a) ${pedido['cliente_nome']} e gostaria de falar sobre meu pedido #${pedido['id'].toString().substring(0, 8)}.');
+                                  if (await canLaunchUrl(url)) await launchUrl(url);
+                                },
+                                icon: const Icon(Icons.chat),
+                                label: const Text('Fale Conosco (WhatsApp)'),
+                              ),
+                            )
                           ],
                         ),
                       ),
